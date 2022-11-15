@@ -4,6 +4,9 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+	  <Version>0.0.1</Version>
+	  <Company>Аверьянов, Бартулей, Васильченко, Войцехович, Данилов, Кудинов, Озольс</Company>
+	  <Product>Lab</Product>
   </PropertyGroup>
 
   <ItemGroup>
