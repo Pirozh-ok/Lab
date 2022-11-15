@@ -1,4 +1,5 @@
 ﻿using BookAPI.Models;
+using BookAPI.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,70 +9,73 @@ namespace BookAPI.Controllers
     [ApiController]
     public class BookController : ControllerBase
     {
-        private static List<Book> _books = new List<Book>();
+        private static IStorage<Book> _books = new MemCache();
 
         [HttpPost]
         public IActionResult Create([FromBody] Book book)
         {
-            if (book is null)
-            {
-                return BadRequest("Book is null");
-            }
+            var validationResult = book.Validate();
 
-            if(_books.Any(x => x.Id == book.Id))
+            if (!validationResult.IsValid)
             {
-                return BadRequest("There is already a book with this ID");
+                return BadRequest(validationResult.Error);
             }
 
             _books.Add(book);
-            return StatusCode(201); 
+
+            return Ok($"Book has been added");
         }
 
-        [HttpGet] 
+        [HttpGet]
         public IActionResult GetAll()
         {
-            return Ok(_books);
+            return Ok(_books.All);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public IActionResult GetById(Guid id)
         {
-            var book = _books.FirstOrDefault(x => x.Id == id);
+            if (!_books.Has(id))
+            {
+                return NotFound("No such");
+            }
 
-            return book is null ? NotFound() : Ok(book);
+            return Ok(_books[id]);
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(Guid id)
         {
-            var book = _books.FirstOrDefault(x => x.Id == id);
-
-            if(book is null)
+            if (!_books.Has(id))
             {
-                return NotFound(); 
+                return NotFound("No such");
             }
 
-            _books.Remove(book);
-            return StatusCode(204);
+            var valueToRemove = _books[id];
+            _books.RemoveAt(id);
+
+            return Ok($"Book has been removed");
         }
 
         [HttpPut]
-        public IActionResult Put([FromBody] Book book)
+        public IActionResult Put(Guid id, [FromBody] Book book)
         {
-            if (book is null)
+            if (!_books.Has(id))
             {
-                return BadRequest("Book is null");
+                return NotFound("No such");
             }
 
-            var bookToUpdate = _books.FirstOrDefault(x => x.Id == book.Id);
+            var validationResult = book.Validate();
 
-            if (bookToUpdate is null)
+            if (!validationResult.IsValid)
             {
-                return BadRequest("There is no book with this ID");
+                return BadRequest(validationResult.Error);
             }
 
-            bookToUpdate = book; 
-            return StatusCode(201);
+            var previousValue = _books[id];
+            _books[id] = book;
+
+            return Ok($"Book has been updated");
         }
 
     }
