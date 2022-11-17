@@ -9,7 +9,12 @@ namespace BookAPI.Controllers
     [ApiController]
     public class BookController : ControllerBase
     {
-        private static IStorage<Book> _books = new MemCache();
+        private readonly IStorage<Book> _books;
+
+        public BookController(IStorage<Book> books)
+        {
+            _books = books;
+        }
 
         [HttpPost]
         public IActionResult Create([FromBody] Book book)
